@@ -3,11 +3,12 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-tarefas: dict = {}
-contador: int = 0
+# Store em memória. Zera quando o processo reinicia.
+_tarefas: dict[int, dict] = {}
+_proximo_id = 1
 
 
-class TarefaCreate(BaseModel):
+class TarefaIn(BaseModel):
     titulo: str
 
 
@@ -22,30 +23,30 @@ def health():
 
 
 @app.post("/tarefas", status_code=201)
-def criar_tarefa(tarefa: TarefaCreate):
-    global contador
-    contador += 1
-    nova = {"id": contador, "titulo": tarefa.titulo, "concluida": False}
-    tarefas[contador] = nova
+def criar(tarefa: TarefaIn):
+    global _proximo_id
+    nova = {"id": _proximo_id, "titulo": tarefa.titulo, "concluida": False}
+    _tarefas[_proximo_id] = nova
+    _proximo_id += 1
     return nova
 
 
 @app.get("/tarefas")
-def listar_tarefas():
-    return list(tarefas.values())
+def listar():
+    return list(_tarefas.values())
 
 
 @app.get("/tarefas/{id}")
-def obter_tarefa(id: int):
-    if id not in tarefas:
+def obter(id: int):
+    if id not in _tarefas:
         raise HTTPException(status_code=404, detail="Tarefa não encontrada")
-    return tarefas[id]
+    return _tarefas[id]
 
 
 @app.put("/tarefas/{id}")
-def atualizar_tarefa(id: int, dados: TarefaUpdate):
-    if id not in tarefas:
+def atualizar(id: int, dados: TarefaUpdate):
+    if id not in _tarefas:
         raise HTTPException(status_code=404, detail="Tarefa não encontrada")
-    tarefas[id]["titulo"] = dados.titulo
-    tarefas[id]["concluida"] = dados.concluida
-    return tarefas[id]
+    _tarefas[id]["titulo"] = dados.titulo
+    _tarefas[id]["concluida"] = dados.concluida
+    return _tarefas[id]
