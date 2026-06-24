@@ -49,3 +49,10 @@ def atualizar_tarefa(id: int, dados: TarefaUpdate):
     tarefas[id]["titulo"] = dados.titulo
     tarefas[id]["concluida"] = dados.concluida
     return tarefas[id]
+
+
+@app.delete("/tarefas/{id}", status_code=204)
+def deletar_tarefa(id: int):
+    if id not in tarefas:
+        raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+    del tarefas[id]
